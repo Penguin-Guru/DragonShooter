@@ -1,4 +1,4 @@
-## This program spawns dragons that fly around on your screen until you click on them (or press 'q').
+This program spawns dragons that fly around on your screen until you click on them (or press 'q').
 
 ### Some highlight features include:
 - Dragon acceleration and starting positions are randomised.
