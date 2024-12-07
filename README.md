@@ -1,9 +1,9 @@
-This program spawns dragons that fly around on your screen until you click on them (or press 'q').
+This program gradually spawns dragons that fly around on your screen until you click on them all (or press 'q').
 
 ### Some highlight features include:
 - Dragon acceleration and starting positions are randomised.
 - Dragons spawn small and gradually grow larger up to a limit.
-- Dragons try to avoid the cursor.
+- Dragons try to evade the cursor.
 
 ### Design overview:
 
@@ -13,7 +13,7 @@ If the program fails to detect a transparent root window, it will fall back on a
 
 Separate threads are run for the event, animation, and spawn loops.
 
-A large portion of the code creates an animated cursor that appears while mouse button 1 is depressed. The cursor image is drawn by the program at run-time, since I wanted to try that.
+A large portion of the code creates an animated cursor that appears while mouse button 1 is depressed. The cursor image is drawn by the program at run-time and the other animation frames are assembled by transforming that initial image.
 
 I did not use shared memory or direct rendering-- this uses the X.11 core protocol. Many of the X.C.B. functions are called with synchronous error handling, which is less efficient but simplifies debugging.
 
