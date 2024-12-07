@@ -1,0 +1,29 @@
+dragon.gif : https://www.animatedimages.org/img-animated-dragon-image-0011-93957.htm
+	https://www.animatedimages.org/help.htm
+		Is your offer free?
+			Of course. All our graphics and greeting cards here at AnimatedImages.org are 100% free. You can take advantage of this offer without any hidden costs or terms. We finance our content exclusively through advertisements and we can pay for our website and our work this way. To us, your free access to our archive without any charges is paramount.
+		Are there any options for further use of the animated gifs?
+			Naturally, you can continue to use all animated graphics. All you need to do is to click on the download button for the selected gif. The graphic is then downloaded and you can save it onto your computer or web space.
+		How can I use the graphics?
+			You can use our graphics both privately and for your business. You can integrate them into:
+				Websites
+				Blogs
+				Forums
+				Social Networks
+				Guest Books
+			Simply apply the UBB Code or HTML code provided. You can equally share our graphics by sending a digital and free greeting card (eCard). The benefit of direct linking is the absence of traffic compromises for our users.
+		What am I not allowed to do with the graphics?
+			You are not allowed to:
+				include the graphics in collections or image archives. use them to create a collection or image archive.
+				copy the categories or their structure.
+				use the graphics commercially through reproduction or in the form of postcards, t-shirts, books or similar.
+				use the gifs in the creation of logos.
+				publish the gifs in printed media, such as catalogues, flyers or magazines.
+
+
+
+		
+Extracting bitmaps from gifs:
+	ffmpeg -i dragon.gif -vsync 0 'dragon-%03d.bmp'
+	ffmpeg -i dragon.gif -pix_fmt bgr8  'dragon-%03d.bmp'
+
