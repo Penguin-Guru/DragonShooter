@@ -29,7 +29,9 @@ I did not use shared memory or direct rendering-- this uses the X.11 core protoc
 - xcb-image
 - xcb-render
 
-Run or read [redo.sh](redo.sh) to compile. That (very simple) script should produce one executable file: "dragon-shooter". The script compiles for debugging, but **DO NOT DEBUG** without the command-line parameter, "--no-overlay". If you do somehow find yourself blocked by the overlay, and pressing 'q' does not remove it, you can switch to a different T.T.Y. and kill the debugger process.
+Run or read [redo.sh](redo.sh) to compile. That (very simple) script should produce one executable file: "dragon-shooter".
+
+The script compiles for debugging, but **DO NOT DEBUG** without the command-line parameter, `--no-overlay`. If you do somehow find yourself blocked by the overlay, and pressing 'q' does not remove it, you can switch to a different T.T.Y. and kill the debugger process.
 
 ---
 
