@@ -37,16 +37,6 @@ xcb_cursor_t make_picture_cursor(const xcb_render_picture_t pic, hotspot_pair ho
 bool make_cursor_frame(xcb_render_animcursorelt_t *cursors, uint_fast8_t index, const cursor_specs_t *specs, uint32_t frame_delay) {
 	assert(frame_delay > 0);
 	cursors[index].cursor = xcb_generate_id(conn);
-	/*cookie = xcb_render_create_cursor_checked(conn,
-		cursors[index].cursor,
-		specs->iterator_pic,
-		specs->hotspot.x, specs->hotspot.y	// "hotspot" offset from origin.
-	);
-	if ((err = xcb_request_check(conn, cookie))) {
-		fprintf(stderr, "Failed to create cursor %d.\n", index);
-		handle_error(conn, err);
-		return false;
-	}*/
 	if (! make_picture_cursor(specs->iterator_pic, specs->hotspot, cursors[index].cursor)) return false;
 	cursors[index].delay = frame_delay;
 	return true;
@@ -278,7 +268,14 @@ bool rotate_clockwise(cursor_specs_t *specs, const float specified_degrees) {	//
 	return true;
 }
 xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_per_second, const uint_fast8_t frames_per_quarter_rotation) {
-	// Note: I have not tested this with negative or zero values.
+	if (rotations_per_second <= 0 || frames_per_quarter_rotation <=0) {
+		if (rotations_per_second < 0)
+			fprintf(stderr, "make_rotating_cursor: Invalid value for rotations_per_second.\n");
+		if (frames_per_quarter_rotation < 0)
+			fprintf(stderr, "make_rotating_cursor: Invalid value for frames_per_quarter_rotation.\n");
+		return 0;
+		// To do: default to using first frame as non-animated cursor.
+	}
 	const uint_fast8_t rotation_degrees = 90;
 	uint_fast8_t arc_segments = 360/rotation_degrees;	// Not sure if useful.
 
@@ -353,12 +350,12 @@ xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_p
 	if ((err = xcb_request_check(conn, cookie))) {
 		fprintf(stderr, "Failed to create animated cursor.\n");
 		handle_error(conn, err);
-		return false;
+		return 0;
 		// To do: default to using first frame as non-animated cursor.
 	}
 	if (!cursor) {	// Not sure if possible.
 		fprintf(stderr, "Failed to create animated cursor?\n");
-		return false;
+		return 0;
 		// To do: default to using first frame as non-animated cursor.
 	}
 

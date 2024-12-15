@@ -392,7 +392,6 @@ void spawn() {
 		MinSpawnInterval.count(),
 		MaxSpawnInterval.count()
 	);
-	//chrono::seconds sleep_duration = chrono::seconds(distr(gen));
 	chrono::seconds sleep_duration = chrono::seconds(0);
 	while (run) {
 		if (
@@ -502,7 +501,7 @@ void event_loop(xcb_connection_t *connection) {
 				break;
 			}
 			//case XCB_CLIENT_MESSAGE:
-			/*case XCB_DESTROY_NOTIFY: {	// This is not currently used. I've left it enabled in case it helps with fringe cases.
+			/*case XCB_DESTROY_NOTIFY: {
 				xcb_destroy_notify_event_t *spec_e = (xcb_destroy_notify_event_t *)gen_e;
 				if (spec_e->window != win && spec_e->window != overlay) break;
 				//cout << "\tMission complete." << endl;
@@ -823,9 +822,6 @@ int main(int argc, char *argv[]) {
 			handle_error(conn, err);
 			// Not counting error. Cursor is non-critical to application.
 		}
-		// Consider changing colour of cursor when hovering a dragon or depending on background colour.
-		// 	This would be handled in the animation loop.
-		// 	xcb_change_gc(connection, *gc, mask, &foreground_value);
 	}
 	{
 		/*// https://tronche.com/gui/x/xlib/appendix/b/
@@ -1170,7 +1166,7 @@ int main(int argc, char *argv[]) {
 
 			// Make sure all threads have finished, so they don't attempt to access freed data.
 			animate_thread.join();	// Make sure this is finished, so it doesn't attempt to access freed data.
-			//spawn_thread.join();
+			//spawn_thread.join();	// This is now below.
 
 			// Clean up.
 			//xcb_composite_release_overlay_window(conn, screen->root);	// This causes the program to not end. Must be killed from a different TTY.

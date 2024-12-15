@@ -137,7 +137,6 @@ void inline move_toward_limit(int_fast16_t * const speed, uint_fast16_t change, 
 	// This uses the valance of limit provided.
 	// Resulting speed will be within the range of (speed,limit), allowing for either to be positive or negative.
 	if (*speed == limit) return;
-	//assert(change != 0);
 	if (change == 0) return;
 	if (*speed > limit) {
 		if (change >= 0) {
@@ -156,7 +155,6 @@ void inline move_toward_limit(int_fast16_t * const speed, uint_fast16_t change, 
 void inline abs_move_within_limit(int_fast16_t * const speed, const uint_fast16_t change, const unsigned short limit) {
 	// This uses the valance of speed provided.
 	// Resulting speed will be bound within the range of EITHER (-limit,0) OR (0,limit).
-	//assert(change != 0);
 	if (change == 0) return;
 	// Note: >= biases toward positive. 0 cases should probably be based on valance of change.
 	if (*speed >= 0) {
@@ -170,7 +168,6 @@ void inline abs_move_within_limit(int_fast16_t * const speed, const uint_fast16_
 void inline move_within_abs_limit(int_fast16_t * const speed, int_fast16_t change, const unsigned short limit) {
 	// This uses the valance of change provided. Only speed and limit are absolute!
 	// Resulting speed will be bound within the range of (-limit,limit).
-	//assert(change != 0);
 	if (change == 0) return;
 	assert(abs(*speed) <= limit);
 	if (abs(*speed += change) > limit) *speed = (signs_match(change, limit) ? limit : -limit);
