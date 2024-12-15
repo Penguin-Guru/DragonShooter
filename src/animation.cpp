@@ -77,11 +77,6 @@ Animation::Animation() {
 				pic,
 				scale_flip_x(min_scale)
 			);
-			/*xcb_render_set_picture_transform(conn,
-				pic,
-				//Animation::flip_x()
-				Animation::scale(Animation::min_scale)
-			);*/
 		}
 	}
 
@@ -244,8 +239,8 @@ void Animation::move() {
 					(evasion_vector.x ? decel.x : 0), (evasion_vector.y ? decel.y : 0),
 					speed.x, speed.y
 				);*/
-			} else {
-				//printf("Exiting cursor evasion mode.\n");
+			/*} else {
+				printf("Exiting cursor evasion mode.\n");*/
 			}
 		}
 	}
@@ -396,12 +391,6 @@ Speed inline Animation::get_escape_vector(const Area * const a) {
 	// Note that the source and destination are swapped, because we want the inverse (to move away).
 	PreciseHeading escape_vector = get_heading(area.center, a->center);
 
-
-	// 	Consider implementing opportunistic breakthroughs (not resulting from boundary confinement).
-	// 	These would allow passing through effect area when risk outweighs cost of reorienting.
-	// 	Decision could be based on:
-	// 		The amount of space within the window on either side of cursor_effect_area.
-	// 		How wide an angle can be created between the cursor position and the evasion vector.
 
 	// Model: https://www.desmos.com/calculator/bop8ykkmox
 
