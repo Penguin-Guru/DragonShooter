@@ -56,23 +56,6 @@ bool set_original_picture(const cursor_specs_t *specs) {
 		return false;
 	}
 
-	// Not sure why something like this isn't necessary:
-	/*xcb_render_transform_t reset = mft(
-		     1,     0,   0,
-		     0,     1,   0,
-		     0,     0,   1
-	);*/
-	/*xcb_render_transform_t reset = mft(
-		     0,     0,   0,
-		     0,     0,   0,
-		     0,     0,   0
-	);*/
-	/*xcb_render_set_picture_transform_checked(conn, specs->iterator_pic, reset);
-	if ((err = xcb_request_check(conn, cookie))) {
-		fprintf(stderr, "Failed to reset image.\n");
-		return false;
-	}*/
-
 	cookie = xcb_render_composite_checked(conn,
 		XCB_RENDER_PICT_OP_SRC,		// Operation (PICTOP).
 		pic,				// Source (PICTURE).
@@ -92,8 +75,6 @@ bool set_original_picture(const cursor_specs_t *specs) {
 	return true;
 }
 bool rotate_clockwise(cursor_specs_t *specs, const float specified_degrees) {	// Used for animating cursor.
-	// https://gitlab.freedesktop.org/cairo/cairo/-/blame/master/src/cairo-matrix.c#L260
-
 	// Prepare a new picture container.
 	xcb_render_picture_t pic = xcb_generate_id(conn);
 	cookie = xcb_render_create_picture_checked(conn,
@@ -131,89 +112,19 @@ bool rotate_clockwise(cursor_specs_t *specs, const float specified_degrees) {	//
 	const double displacement_x = rotated_center_x - initial_center_x;
 	const double displacement_y = rotated_center_y - initial_center_y;
 
-	/*printf(	// Debugging.
-		"Cursor for degree: 0 --> %f (%f --> %f)\n"
-			"\tradians: %f\n"
-			"\tsin(a): %f\n"
-			"\tcos(a): %f\n"
-			"\twidth: %d\n"
-			"\theight: %d\n"
-			"\tspecs->initial_angle_to_center: %f\n"
-			"\toffset_angle: %f\n"
-			"\toffset_radians: %f\n"
-			"\tinitial_center: (%d, %d)\n"
-			"\tdistance_from_origin_to_center: %f\n"
-			"\trotated_center: (%f, %f)\n"
-			"\tdisplacement: (%f, %f)\n"
-		,
-		specified_degrees, specs->initial_angle_to_center, specs->initial_angle_to_center + specified_degrees,
-		specified_radians,
-		sina,
-		cosa,
-		specs->width,
-		specs->height,
-		specs->initial_angle_to_center,
-		offset_angle,
-		offset_radians,
-		initial_center_x, initial_center_y,
-		distance_from_origin_to_center,
-		rotated_center_x, rotated_center_y,
-		displacement_x, displacement_y
-	);*/
-
 
 	//
 	// Compose the projective transformation matrix:
 	//
 
-	/*
-	 * https://www.x.org/releases/X11R7.7/doc/renderproto/renderproto.txt
-	 * 	The transform maps from destination pixel geometry back to the source pixel geometry.
-	 *	Matrix format: [
-	 *		p11, p12, p13
-	 *		p21, p22, p23
-	 *		p31, p32, p33
-	 *	]
-	 *	Composite:
-	 *		Combines the specified rectangle of the transformed src and mask operands with the specified rectangle of dst using op as the compositing operator.
-	 *		Coordinates are relative their respective (transformed) drawable's origin.
-	 *
-	 * https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/geometry/geo-tran.html
-	 */
-	/*const xcb_render_transform_t transform = mft(	// Inverse of (translate then rotate).
-		  cosa,  sina,   -displacement_x,
-		  //cosa,  sina,   displacement_x,	// X value negated as an experiment.
-		 //-sina,  cosa,   -displacement_y,
-		 -sina,  cosa,   displacement_y,	// Value is negated, to account for X11's Y-axis.
-		     0,     0,   1
-	);*/
-	/*const xcb_render_transform_t transform = mft(	// Translate then rotate.
-		  cosa,  sina,   (displacement_x * cosa) - (displacement_y * sina),
-		 -sina,  cosa,   (displacement_x * sina) + (displacement_y * cosa),
-		     0,     0,   1
-	);*/
-	/*const xcb_render_transform_t transform = mft(	// Inverse of (rotate then translate).
-		  cosa,  sina,   (-displacement_x * cosa) - (displacement_y * sina),
-		 -sina,  cosa,   (displacement_x * sina) - (displacement_y * cosa),
-		     0,     0,   1
-	);*/
-	// (P'.x = x - x cos(-angle) - y sin(-angle); P'.y = y cos(-angle) + x sin(-angle)).
 	// https://www.desmos.com/calculator/suhyccgrax
-	const xcb_render_transform_t transform = mft(	// Why does this work?
-		  /*cosa,  sina,   displacement_x - (displacement_x * std::cos(-specified_radians)) - (displacement_y * std::sin(-specified_radians)),
-		 -sina,  cosa,   (displacement_y * std::cos(-specified_radians)) + (displacement_x * std::sin(-specified_radians)),*/
+	// I am not yet sure this is the correct math. If you know better or encounter bugs, please let me know!
+	const xcb_render_transform_t transform = mft(
 		  cosa,  sina,   (displacement_x * std::cos(-specified_radians)) - (displacement_y * std::sin(-specified_radians)),
 		 -sina,  cosa,   (displacement_y * std::cos(-specified_radians)) + (displacement_x * std::sin(-specified_radians)),
-		  /*cosa,  sina,   rotated_center_x - (rotated_center_x * std::cos(-specified_radians)) - (rotated_center_y * std::sin(-specified_radians)),
-		 -sina,  cosa,   (rotated_center_y * std::cos(-specified_radians)) + (rotated_center_x * std::sin(-specified_radians)),*/
-		  /*cosa,  sina,   initial_center_x - (initial_center_x * std::cos(-specified_radians)) - (initial_center_y * std::sin(-specified_radians)),
-		 -sina,  cosa,   (initial_center_y * std::cos(-specified_radians)) + (initial_center_x * std::sin(-specified_radians)),*/
-		  /*cosa,  sina,   (initial_center_x * std::cos(-specified_radians)) - (initial_center_y * std::sin(-specified_radians)),
-		 -sina,  cosa,   (initial_center_y * std::cos(-specified_radians)) + (initial_center_x * std::sin(-specified_radians)),*/
 		     0,     0,   1
 	);
 
-	//print_transformation(transform);	// Debugging.
 	xcb_render_set_picture_transform(conn, pic, transform);
 
 
@@ -224,17 +135,7 @@ bool rotate_clockwise(cursor_specs_t *specs, const float specified_degrees) {	//
 	cookie = xcb_render_set_picture_filter_checked(conn,
 		pic,	// Picture.
 		4,	// strlen(filter).
-		//"fast",	// Filter name/alias.
 		"good",	// Filter name/alias.
-		//"best",	// Filter name/alias.
-		//7,	// strlen(filter).
-		//"nearest",	// Filter name/alias.
-		//8,	// strlen(filter).
-		//"bilinear",	// Filter name/alias.
-		//8,	// strlen(filter).
-		//"binomial",	// Filter name/alias.
-		//11,	// strlen(filter).
-		//"convolution",	// Filter name/alias.
 		0,	// values_len
 		NULL	// values (xcb_render_fixed_t*)
 	);
@@ -274,7 +175,6 @@ xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_p
 		if (frames_per_quarter_rotation < 0)
 			fprintf(stderr, "make_rotating_cursor: Invalid value for frames_per_quarter_rotation.\n");
 		return 0;
-		// To do: default to using first frame as non-animated cursor.
 	}
 	const uint_fast8_t rotation_degrees = 90;
 	uint_fast8_t arc_segments = 360/rotation_degrees;	// Not sure if useful.
@@ -283,7 +183,6 @@ xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_p
 	// Check whether rotation can be subdivided based on initial picture's aspect ratio. This reduces blur due to filtering.
 	if (fmod((specs->initial_angle_to_center = 45 * (specs->height / specs->width)), rotation_degrees)) {
 		const float factor = specs->initial_angle_to_center / rotation_degrees;
-		//printf("Detected optimisation for cursor animation based on picture's aspect ratio. Divisor: %f.\n", factor);
 		num_cursors *= factor;
 		num_cursors++; // +1 to include 0 index.
 		arc_segments /= factor;
@@ -310,7 +209,6 @@ xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_p
 		return 0;
 	}
 	if (! make_cursor_frame(cursors, cursor_ct++, specs, frame_delay)) return 0;
-	// To do: abort early when num_cursors==1. Use that one as the (non-animated) cursor.
 
 	// Generate the remaining frames:
 	while (cursor_ct < num_cursors) {
@@ -319,7 +217,6 @@ xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_p
 			rotate_clockwise(specs, degrees_increment);
 		} else {
 			if (cursor_ct == (uint_fast8_t)std::round((float)num_cursors/2)) {
-				//printf("Resetting cursor: %hd\n", cursor_ct);
 				set_original_picture(specs);
 				rotate_clockwise(specs, -degrees_increment * (num_cursors - (cursor_ct)));
 			} else {
@@ -351,15 +248,11 @@ xcb_cursor_t make_rotating_cursor(cursor_specs_t *specs, const float rotations_p
 		fprintf(stderr, "Failed to create animated cursor.\n");
 		handle_error(conn, err);
 		return 0;
-		// To do: default to using first frame as non-animated cursor.
 	}
 	if (!cursor) {	// Not sure if possible.
 		fprintf(stderr, "Failed to create animated cursor?\n");
 		return 0;
-		// To do: default to using first frame as non-animated cursor.
 	}
 
-	//printf("degrees_increment: %f\n", degrees_increment);
-	//printf("frame_delay: %u\n", frame_delay);
 	return cursor;
 }

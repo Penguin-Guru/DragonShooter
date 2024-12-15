@@ -81,7 +81,6 @@ Distance inline abs_sum(const Distance &a, const Distance &b) {
 	return abs(a) + abs(b);
 }
 Distance inline abs_total(const Speed &s) {
-	// To do: protect against overflows.
 	return abs(s.x) + abs(s.y);
 }
 
@@ -107,7 +106,6 @@ bool inline signs_mismatch(const T &t, const U &u) {
 }
 
 
-// https://stackoverflow.com/questions/21956119/add-stdpair-with-operator
 template <typename T, typename U>
 std::pair<T,U> operator+(const std::pair<T,U> &l, const std::pair<T,U> &r) {
 	return {l.first+r.first, l.second+r.second};
@@ -217,7 +215,7 @@ class Animation {
 			initial_width = 0,
 			initial_height = 0
 		;
-		static constexpr float	// Could be calculated based on screen size.
+		static constexpr float
 			min_scale = 0.2,
 			max_scale = 2
 		;

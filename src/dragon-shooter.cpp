@@ -18,7 +18,6 @@
 #include <vector>
 #include <set>	// For sorting.
 #include "BMP.h"	// Testing...
-//#include "libbmp.h"
 
 // Used for animation:
 #include "animation.h"
@@ -69,7 +68,6 @@ static const uint_fast8_t MaxDragons = 3;
 
 bool get_picture_format() {
 	// https://coral.googlesource.com/weston-imx/+/refs/tags/3.0.0-3/xwayland/window-manager.c#2441
-
 	auto fc = xcb_render_query_pict_formats(conn);
 	auto *fr = xcb_render_query_pict_formats_reply(conn, fc, 0);
 	auto formats = xcb_render_query_pict_formats_formats(fr);
@@ -120,7 +118,6 @@ bool supports_transparency() {
 	);
 	if (err) {
 		fprintf(stderr, "Failed to query owner of atom: \"_NET_WM_CM_S0\"\n");
-		//handle_error(conn, err);
 		return false;
 	}
 
@@ -138,10 +135,8 @@ bool supports_transparency() {
 
 unsigned short get_files(vector<BMP> *files) {
 	fs::path WD = fs::canonical("/proc/self/exe").parent_path();
-	//cout << "WD: " << WD.string() << endl;
 	WD /= "assets";
 	if (!fs::exists(WD)) return 0;
-	//cout << "Searching for \".bmp\" files in \"" << WD.string() << "\"..." << endl;
 	set<fs::path> paths;	// For sorting.
 	for (auto const& entry : fs::directory_iterator{WD}) {
 		if (entry.path().extension() != ".bmp") continue;
@@ -156,24 +151,8 @@ unsigned short get_files(vector<BMP> *files) {
 	}
 	for (auto path : paths) {
 		BMP bmp(path.c_str());
-		/*cout
-			<< "\n\tLoading: " << path.string()
-			<< "\n\t\tsize (bytes): " << bmp.data.size()
-			<< "\n\t\tdeclared size (bytes): " << bmp.bmp_info_header.size
-			<< "\n\t\tdeclared width: " << bmp.bmp_info_header.width
-			<< "\n\t\tdeclared height: " << bmp.bmp_info_header.height
-			<< "\n\t\tplanes: " << bmp.bmp_info_header.planes
-			<< "\n\t\tbit_count: " << bmp.bmp_info_header.bit_count
-			<< "\n\t\tcompression: " << bmp.bmp_info_header.compression
-			<< "\n\t\tred_mask: " << bmp.colour_header.red_mask
-			<< "\n\t\tgreen_mask: " << bmp.colour_header.green_mask
-			<< "\n\t\tblue_mask: " << bmp.colour_header.blue_mask
-			<< "\n\t\talpha_mask: " << bmp.colour_header.alpha_mask
-		<< endl;*/
-
 		files->push_back(bmp);
 	}
-	//cout << endl;
 	return files->size();
 }
 
@@ -187,7 +166,6 @@ unsigned short init_pixmaps() {
 		if (Animation::initial_height < file.bmp_info_header.height)
 			Animation::initial_height = file.bmp_info_header.height;
 
-		// https://codebrowser.dev/qt6/include/xcb/xcb_image.h.html
 		xcb_image_t *img = xcb_image_create_native(conn,
 			Animation::initial_width,	// Width.
 			Animation::initial_height,	// Height.
@@ -274,7 +252,7 @@ void draw_dragons() {
 		// Remove dead dragons:
 		// It would be more efficient to handle this in the dragons' move method, since that occurs before this within the animation loop.
 		// That is not currently possible because the class can't currently remove its pointer from the application's vector.
-		auto d = *di;	// This is silly.
+		auto d = *di;
 		if (d->dead) {	// If, not while, to allow for breaking loop. Less stutter when bg is flushed to win.
 			di = dragons.erase(di);
 			if (di == dragons.end()) break;
@@ -307,27 +285,6 @@ void draw_dragons() {
 	return;
 }
 
-/*void sendCloseConnectionEvent() {
-	// https://stackoverflow.com/questions/30387126/how-do-i-interrupt-xcb-wait-for-event
-	// A hack to close XCB connection. Apparently XCB does not have any APIs for this?
-	xcb_client_message_event_t event = {0};
-	event.response_type = XCB_CLIENT_MESSAGE;
-	event.format = 32;
-	event.sequence = 0;
-	event.window = win;
-	//event.type = m_connection->atom(QXcbAtom::_QT_CLOSE_CONNECTION);
-	event.type = XCB_ATOM_ANY;
-	event.data.data32[0] = 0;
-	
-	xcb_send_event(conn,
-		false,
-		win,
-		XCB_EVENT_MASK_NO_EVENT,
-		reinterpret_cast<const char *>(&event)
-	);
-	xcb_flush(conn);
-}*/
-
 void update_cursor_position() {
 	xcb_query_pointer_reply_t *qpr = xcb_query_pointer_reply(conn,
 		xcb_query_pointer(conn, win),
@@ -336,10 +293,6 @@ void update_cursor_position() {
 	if (!qpr->same_screen) {
 		fprintf(stderr, "Warning: multi-screen setups have not been tested.\n");
 	}
-	/*if (qpr->child != win) {
-		cursor_effect_area = {0};
-		return;
-	}*/
 	cursor_effect_area = {
 		.origin = {
 			(int_fast16_t)(qpr->win_x) - CursorEffectDistancePixels,
@@ -428,10 +381,8 @@ void event_loop(xcb_connection_t *connection) {
 
 				for (auto d : dragons) {
 					if (!point_within_area((Position){x, y}, d->area)) continue;
-					//printf("Shot dragon! (%d, %d)\n", x, y);
 					d->dead = true;
 					if (dragons.size() <= 1) run = false; // Handle in event loop so there is no race condition.
-					//printf("Dragons remaining: %ld\n", dragons.size());
 					break;	// No multi-kills.
 				}
 
@@ -449,7 +400,6 @@ void event_loop(xcb_connection_t *connection) {
 			case XCB_KEY_PRESS: {
 				xcb_key_press_event_t *spec_e = (xcb_key_press_event_t *)gen_e;
 				xcb_keysym_t val = xcb_key_press_lookup_keysym(syms, spec_e, 0);
-				//printf("Keycode %d -> '%c'.\n", spec_e->detail, val);
 				if (val == 'q') {	// Accept 'q' to quit.
 					run = false;
 					free(gen_e);			// Not sure if useful.
@@ -460,8 +410,6 @@ void event_loop(xcb_connection_t *connection) {
 				break;
 			}
 			case XCB_EXPOSE: {
-				//cout << "XCB_EXPOSE (window)" << endl;
-
 				if (win_geom) free(win_geom);
 				win_geom = xcb_get_geometry_reply(conn,
 					xcb_get_geometry(conn, win),
@@ -473,13 +421,6 @@ void event_loop(xcb_connection_t *connection) {
 					xcb_key_symbols_free(syms);
 					return;
 				}
-				/*cout
-					<< "\twidth: " << win_geom->width
-					<< "\n\theight: " << win_geom->height
-					<< "\n\tdepth: " << to_string(win_geom->depth)
-					<< "\n\tx: " << win_geom->x
-					<< "\n\ty: " << win_geom->y
-				<< endl;*/
 
 				win_area = {
 					.origin = {
@@ -500,23 +441,6 @@ void event_loop(xcb_connection_t *connection) {
 
 				break;
 			}
-			//case XCB_CLIENT_MESSAGE:
-			/*case XCB_DESTROY_NOTIFY: {
-				xcb_destroy_notify_event_t *spec_e = (xcb_destroy_notify_event_t *)gen_e;
-				if (spec_e->window != win && spec_e->window != overlay) break;
-				//cout << "\tMission complete." << endl;
-				cout << "run: " << (run ? "true" : "false") << endl;
-				free(gen_e);			// Not sure if useful.
-				xcb_key_symbols_free(syms);	// Not sure if useful.
-				if (win_geom) free(win_geom);	// Probably always assigned.
-				return;
-			}*/
-			/*default: {
-				//xcb_ge_generic_event_t *spec_e = (xcb_ge_generic_event_t *)gen_e;
-				//cout << "Event: " << to_string(spec_e->event_type) << endl;
-				cout << "Unhandled event: " << to_string(gen_e->response_type) << endl;
-				break;
-			}*/
 		}
 		free (gen_e);
 	}
@@ -558,7 +482,6 @@ int main(int argc, char *argv[]) {
 		xcb_composite_get_overlay_window_cookie_t cowc =
 			xcb_composite_get_overlay_window(conn, screen->root)
 		;
-		//xcb_composite_get_overlay_window_reply_t *cowr =
 		cowr = xcb_composite_get_overlay_window_reply(conn, cowc, &err)
 		;
 		if (!cowr) return 1;
@@ -569,22 +492,15 @@ int main(int argc, char *argv[]) {
 	{	// Get 32-bit visual for screen:
 		xcb_depth_iterator_t depth_iter;
 		depth_iter = xcb_screen_allowed_depths_iterator (screen);
-		//unsigned short d = 0, v;
 		for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
 			xcb_visualtype_iterator_t visual_iter;
-			//printf("depth: %d\n", d++);
 
 			visual_iter = xcb_depth_visuals_iterator (depth_iter.data);
-			//v = 0;
 			for (; visual_iter.rem; xcb_visualtype_next (&visual_iter)) {
-				//printf("\tbits: %d\n", visual_iter.data->bits_per_rgb_value);
-				//v++;
-				//if (visual_iter.data->bits_per_rgb_value == 32) {
 				if (visual_iter.data->_class == 4) {
 					visual = visual_iter.data;
 				}
 			}
-			//printf("\tbits: %d\n", v);
 		}
 	}
 	if (!visual) {
@@ -627,7 +543,6 @@ int main(int argc, char *argv[]) {
 				| XCB_EVENT_MASK_BUTTON_RELEASE
 				| XCB_EVENT_MASK_BUTTON_1_MOTION
 				| XCB_EVENT_MASK_EXPOSURE
-				//| XCB_EVENT_MASK_STRUCTURE_NOTIFY
 			);
 			values.push_back(cmap);
 		} else {
@@ -654,7 +569,6 @@ int main(int argc, char *argv[]) {
 				| XCB_EVENT_MASK_BUTTON_RELEASE
 				| XCB_EVENT_MASK_BUTTON_1_MOTION
 				| XCB_EVENT_MASK_EXPOSURE
-				//| XCB_EVENT_MASK_STRUCTURE_NOTIFY
 			);
 			values.push_back(cmap);
 		}
@@ -695,37 +609,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Failed to set input focus.\n");
 			errors++;
 		}
-		/*xcb_grab_key_checked(conn,
-			1,			// "owner_events".
-			win,			// "grab_window".
-			XCB_MOD_MASK_ANY,	// "modifiers".
-			XCB_GRAB_ANY,		// "key".
-			XCB_GRAB_MODE_ASYNC,	// "pointer_mode".
-			XCB_GRAB_MODE_ASYNC	// "keyboard_mode".
-		);
-		if ((err = xcb_request_check(conn, cookie))) {
-			cerr << "Failed to grab key." << endl;
-			errors++;
-		}*/
 
-
-
-		/*xcb_composite_redirect_window(conn,
-			win,
-			XCB_COMPOSITE_REDIRECT_AUTOMATIC
-			//XCB_COMPOSITE_REDIRECT_MANUAL
-		);*/
-		/*xcb_composite_redirect_subwindows(conn,
-			//cowr->overlay_win,
-			screen->root,
-			XCB_COMPOSITE_REDIRECT_AUTOMATIC
-			//XCB_COMPOSITE_REDIRECT_MANUAL
-		);
-		xcb_composite_unredirect_subwindows(conn,
-			win,
-			//XCB_COMPOSITE_REDIRECT_AUTOMATIC
-			XCB_COMPOSITE_REDIRECT_MANUAL
-		);*/
 		xcb_flush(conn);
 	}
 
@@ -748,22 +632,6 @@ int main(int argc, char *argv[]) {
 			errors++;
 		}
 	}
-
-	/*if (!use_overlay) {
-		// Paint the non-overlay window's background.
-		xcb_rectangle_t bg_rectangle = {0, 0, screen->width_in_pixels, screen->height_in_pixels};
-		cookie = xcb_poly_fill_rectangle_checked(conn,
-			win,
-			gc,
-			1,
-			&bg_rectangle
-		);
-		if ((err = xcb_request_check(conn, cookie))) {
-			fprintf(stderr, "Failed to draw window background.\n");
-			handle_error(conn, err);
-			// Not counting error. Background is non-critical to application.
-		}
-	}*/
 
 
 	//
@@ -824,80 +692,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	{
-		/*// https://tronche.com/gui/x/xlib/appendix/b/
-		xcb_font_t cursor_font = xcb_generate_id(conn);
-		xcb_open_font_checked(conn,
-			cursor_font,
-			6,	// strlen("cursor").
-			"cursor"
-		);
-		if ((err = xcb_request_check(conn, cookie))) {
-			cerr << "Failed to open font." << endl;
-			errors++;
-		}
-		targeting_cursor = xcb_generate_id(conn);
-		xcb_create_glyph_cursor(conn,
-			targeting_cursor,
-			cursor_font,
-			cursor_font,
-			34,
-			//30,
-			34,
-			//30,
-			0, 0, 0,
-			0, 0, 0
-		);*/
-
-		/*// Get size of cursor:
-		xcb_char2b_t tc2 = {
-			static_cast<uint8_t>(34),
-			static_cast<uint8_t>(34)
-		};
-		auto tec = xcb_query_text_extents(conn,
-			cursor_font,	// Font or G.C.
-			1,		 // Length of string (below).
-			&tc2		// String.
-		);
-		auto ter = xcb_query_text_extents_reply(conn,
-			tec,
-			&err
-		);
-		auto initial_cursor_width = ter->overall_width;
-		auto initial_cursor_height = ter->overall_ascent;
-		cout
-			<< "initial_cursor_width: " << to_string(initial_cursor_width)
-			<< "initial_cursor_height: " << to_string(initial_cursor_height)
-		<< endl;
-		free(ter);*/
-
-
-		// Make picture of glyph:
-		//auto cursor_pixmap = xcb_generate_id(conn);
-		/*cursor_pixmap = xcb_generate_id(conn);
-		xcb_create_pixmap(conn,
-			32,
-			cursor_pixmap,
-			targeting_cursor,
-			screen->width_in_pixels,
-			screen->height_in_pixels
-		);
-		xcb_image_text_16_checked(conn,
-			1,	// String length (see below).
-			cursor_pixmap,
-			gc,	// Foreground used for painting.
-			0, 0,	// X, Y.
-			&tc2	// String.
-		);
-		auto cursor_pixmap = xcb_generate_id(conn);
-		xcb_render_create_picture_checked(conn,
-			cursor_pixmap,		// pid
-			targeting_cursor,	// drawable
-			pfi.id,			// format
-			0,			// value_mask
-			NULL			// *value_list
-		);*/
-
-
 		const uint_fast8_t CursorSize = 60;
 
 		// Create pixmap:
@@ -981,160 +775,6 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Failed to make cursor.\n");
 			}
 		}
-		//xcb_free_pixmap(conn, cursor_pixmap);
-
-		/*//
-		// (Incomplete) test using glyph cursor:
-		//
-		// Not sure if necessary. Might just use pfi.id.
-		xcb_render_pictforminfo_t *fmt_a8 = xcb_render_util_find_standard_format(
-			rqpfr,
-			XCB_PICT_STANDARD_A_8
-		);
-		//
-		xcb_render_glyphset_t glyphset = xcb_generate_id(conn);
-		xcb_render_create_glyph_set_checked(conn,
-			glyphset,
-			//pfi.id
-			fmt_a8->id
-		);
-		xcb_render_glyphinfo_t glyphinfo = {
-			//static_cast<uint16_t>(initial_cursor_width),	// Width.
-			//static_cast<uint16_t>(initial_cursor_height),	// Height.
-			static_cast<uint16_t>(CursorSize),	// Width.
-			static_cast<uint16_t>(CursorSize),	// Height.
-			static_cast<int16_t>(0),	// X.
-			static_cast<int16_t>(0),	// Y.
-			static_cast<int16_t>(0),	// X_offset.
-			static_cast<int16_t>(0)		// Y_offset.
-		};
-		xcb_render_add_glyphs_checked(conn,
-			glyphset,
-			1,		// Length of glyphset.
-			0,		// Glyph I.D. (plural).
-			&glyphinfo,
-			NULL,		// Data length.
-			cursor_pixmap	// Data.
-		);*/
-
-		//
-		// https://github.com/i3/i3lock/blob/main/xcb.c
-		//
-		/*const unsigned char curs_invisible_bits[] = {
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    		};
-		const unsigned char curs_windows_bits[] = {
-			0xfe, 0x07, 0xfc, 0x07, 0xfa, 0x07, 0xf6, 0x07, 0xee, 0x07, 0xde, 0x07,
-			0xbe, 0x07, 0x7e, 0x07, 0xfe, 0x06, 0xfe, 0x05, 0x3e, 0x00, 0xb6, 0x07,
-			0x6a, 0x07, 0x6c, 0x07, 0xde, 0x06, 0xdf, 0x06, 0xbf, 0x05, 0xbf, 0x05,
-			0x7f, 0x06
-		};
-		const unsigned char mask_windows_bits[] = {
-			0x01, 0x00, 0x03, 0x00, 0x07, 0x00, 0x0f, 0x00, 0x1f, 0x00, 0x3f, 0x00,
-			0x7f, 0x00, 0xff, 0x00, 0xff, 0x01, 0xff, 0x03, 0xff, 0x07, 0x7f, 0x00,
-			0xf7, 0x00, 0xf3, 0x00, 0xe1, 0x01, 0xe0, 0x01, 0xc0, 0x03, 0xc0, 0x03,
-			0x80, 0x01
-		};*/
-		/*xcb_segment_t segments[] = {
-			{HalfCursorSize, 0, HalfCursorSize, CursorSize},	// Vertical.
-			{0, HalfCursorSize, CursorSize, HalfCursorSize}		// Horizontal.
-		};*/
-		//
-		/*xcb_pixmap_t bitmap = xcb_create_pixmap_from_bitmap_data(conn,
-			win,
-			curs_windows_bits,
-			CursorSize,
-			CursorSize,
-			1,
-			screen->white_pixel,
-			screen->black_pixel,
-			NULL
-		);*/
-		/*cursor_pixmap = xcb_generate_id(conn);
-		cookie = xcb_create_pixmap_checked(conn,
-			32,	// Depth.
-			cursor_pixmap,
-			win,
-			CursorSize, CursorSize
-		);
-		if ((err = xcb_request_check(conn, cookie))) {
-			cerr << "Failed to create pixmap (fg)." << endl;
-			handle_error(conn, err);
-		}
-		cookie = xcb_poly_segment_checked(conn,
-			cursor_pixmap,
-			gc,
-			2,	// Number of segments.
-			segments
-		);
-		if ((err = xcb_request_check(conn, cookie))) {
-			cerr << "Failed to draw cursor lines (fg)." << endl;
-			handle_error(conn, err);
-		}
-		//
-		xcb_pixmap_t mask = xcb_create_pixmap_from_bitmap_data(conn,
-		      win,
-		      //mask_bits,
-		      cursor_pixmap,
-		      CursorSize,
-		      CursorSize,
-		      1,
-		      //screen->white_pixel,
-		      //screen->black_pixel,
-		      screen->black_pixel,
-		      screen->white_pixel,
-		      NULL
-		);
-		//
-		//cursor = xcb_generate_id(conn);
-		xcb_create_cursor(conn,
-			targeting_cursor,
-			bitmap,
-			mask,
-			65535, 65535, 65535,
-			0, 0, 0,
-			0, 0
-		);*/
-
-		/*//
-		// https://github.com/krh/weston/blob/master/src/xwayland/window-manager.c#L146
-		//
-		const auto CursorWidth = CursorSize;
-		const auto CursorHeight = CursorSize;
-		const int CursorStride = CursorWidth * 4;
-		const auto HotspotX = HalfCursorSize;
-		const auto HotspotY = HalfCursorSize;
-		//
-		xcb_pixmap_t pix = xcb_generate_id(conn);
-		xcb_create_pixmap(conn, 32, pix, screen->root, CursorWidth, CursorHeight);
-		//
-		xcb_render_picture_t pic = xcb_generate_id(conn);
-		//xcb_render_create_picture(conn, pic, pix, wm->format_rgba.id, 0, 0);
-		xcb_render_create_picture(conn, pic, pix, pfi.id, 0, 0);
-		//
-		//gc = xcb_generate_id(conn);
-		//xcb_create_gc(conn, gc, pix, 0, 0);
-		//
-		xcb_put_image(conn, XCB_IMAGE_FORMAT_Z_PIXMAP, pix, gc,
-			CursorWidth, CursorHeight, 0, 0, 0, 32,
-			//CursorStride * CursorHeight, (uint8_t *) img->pixels
-			CursorStride * CursorHeight, (uint8_t *) cursor_zpixmap_pixels
-		);
-		xcb_free_gc(conn, gc);
-		//
-		//cursor = xcb_generate_id(conn);
-		//xcb_render_create_cursor(conn, cursor, pic, img->xhot, img->yhot);
-		xcb_render_create_cursor(conn, targeting_cursor, pic, HotspotX, HotspotY);
-		//
-		xcb_render_free_picture(conn, pic);
-		xcb_free_pixmap(conn, pix);*/
-
-
-		/*xcb_change_window_attributes(conn,	// Testing...
-			win,
-			XCB_CW_CURSOR,
-			&targeting_cursor
-		);*/
 	}
 
 
