@@ -1,4 +1,6 @@
-This program gradually spawns dragons that fly around on your screen until you click on them all (or press 'q').
+This is an X11 program that gradually spawns dragons that fly around on your screen until you click on them all (or press 'q').
+
+Xwayland is not currently supported (https://github.com/Penguin-Guru/DragonShooter/issues/14).
 
 ### Some highlight features include:
 - Dragon acceleration and starting positions are randomised.
