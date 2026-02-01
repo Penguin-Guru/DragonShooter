@@ -2,6 +2,8 @@ This is an X11 program that gradually spawns dragons that fly around on your scr
 
 Xwayland is not currently supported (https://github.com/Penguin-Guru/DragonShooter/issues/14).
 
+This repository currently uses a submodule, so it should be cloned recursively.
+
 ### Some highlight features include:
 - Dragon acceleration and starting positions are randomised.
 - Dragons spawn small and gradually grow larger up to a limit.
